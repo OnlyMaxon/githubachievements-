@@ -3,11 +3,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { AchievementCard } from '@/components/AchievementCard'
 import { AchievementDetails } from '@/components/AchievementDetails'
 import { UserProfileHeader } from '@/components/UserProfileHeader'
+import { RepositoryList } from '@/components/RepositoryList'
 import { achievements, Achievement, UserData } from '@/lib/achievements'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
-import { Trophy, Lock, Target } from '@phosphor-icons/react'
+import { Trophy, Lock, Target, Folder } from '@phosphor-icons/react'
 
 function App() {
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null)
@@ -16,6 +17,7 @@ function App() {
   const [unlockedAchievements, setUnlockedAchievements] = useKV<string[]>('unlocked-achievements', [])
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('all')
+  const [mainTab, setMainTab] = useState('achievements')
 
   useEffect(() => {
     const loadCurrentUser = async () => {
@@ -161,48 +163,67 @@ function App() {
             isLoading={isLoading}
           />
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
-              <TabsTrigger value="all" className="gap-2">
+          <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="achievements" className="gap-2">
                 <Trophy className="w-4 h-4" />
-                All ({achievements.length})
+                Achievements
               </TabsTrigger>
-              <TabsTrigger value="unlocked" className="gap-2">
-                <Trophy weight="fill" className="w-4 h-4" />
-                Unlocked ({unlockedCount})
-              </TabsTrigger>
-              <TabsTrigger value="locked" className="gap-2">
-                <Lock className="w-4 h-4" />
-                Locked ({achievements.length - unlockedCount})
+              <TabsTrigger value="repositories" className="gap-2" disabled={!userData}>
+                <Folder className="w-4 h-4" />
+                Repositories
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value={activeTab} className="mt-6">
-              {filteredAchievements.length === 0 ? (
-                <div className="text-center py-12 space-y-4">
-                  <Target className="w-16 h-16 mx-auto text-muted-foreground" />
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2">No achievements here yet</h3>
-                    <p className="text-muted-foreground">
-                      {activeTab === 'unlocked' 
-                        ? 'Start contributing to unlock achievements!' 
-                        : 'Keep working to unlock more achievements!'}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredAchievements.map(achievement => (
-                    <AchievementCard
-                      key={achievement.id}
-                      achievement={achievement}
-                      unlocked={unlockedAchievements?.includes(achievement.id) || false}
-                      progress={getAchievementProgress(achievement)}
-                      onClick={() => handleAchievementClick(achievement)}
-                    />
-                  ))}
-                </div>
-              )}
+            <TabsContent value="achievements" className="mt-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full max-w-md grid-cols-3">
+                  <TabsTrigger value="all" className="gap-2">
+                    <Trophy className="w-4 h-4" />
+                    All ({achievements.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="unlocked" className="gap-2">
+                    <Trophy weight="fill" className="w-4 h-4" />
+                    Unlocked ({unlockedCount})
+                  </TabsTrigger>
+                  <TabsTrigger value="locked" className="gap-2">
+                    <Lock className="w-4 h-4" />
+                    Locked ({achievements.length - unlockedCount})
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value={activeTab} className="mt-6">
+                  {filteredAchievements.length === 0 ? (
+                    <div className="text-center py-12 space-y-4">
+                      <Target className="w-16 h-16 mx-auto text-muted-foreground" />
+                      <div>
+                        <h3 className="text-xl font-semibold mb-2">No achievements here yet</h3>
+                        <p className="text-muted-foreground">
+                          {activeTab === 'unlocked' 
+                            ? 'Start contributing to unlock achievements!' 
+                            : 'Keep working to unlock more achievements!'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredAchievements.map(achievement => (
+                        <AchievementCard
+                          key={achievement.id}
+                          achievement={achievement}
+                          unlocked={unlockedAchievements?.includes(achievement.id) || false}
+                          progress={getAchievementProgress(achievement)}
+                          onClick={() => handleAchievementClick(achievement)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
+
+            <TabsContent value="repositories" className="mt-6">
+              {userData && <RepositoryList username={userData.login} />}
             </TabsContent>
           </Tabs>
         </div>
